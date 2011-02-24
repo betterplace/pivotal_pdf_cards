@@ -13,6 +13,11 @@ require 'ostruct'
 require 'term/ansicolor'
 require 'prawn'
 require 'prawn/layout/grid'
+require "rqr"
+
+
+$: << File.join(File.dirname(__FILE__), 'lib')
+require 'card'
 
 class String; include Term::ANSIColor; end
 
@@ -23,37 +28,7 @@ unless file
   exit 1
 end
 
-# --- Read the CSV file -------------------------------------------------------
-
-stories = FasterCSV.read(file)
-headers = stories.shift
-
-# p headers
-# p stories
-
-# --- Hold story in Card class
-
-class Card < OpenStruct
-  def type
-    @table[:type]
-  end
-end
-
-# --- Create cards objects
-
-cards = stories.map do |story|
-  attrs =  { :title  => story[1]   || '',
-             :body   => story[14]  || '',
-             :type   => story[6]   || '',
-             :points => story[7]   || '...',
-             :owner  => story[13]  || '.'*50}
-
-  Card.new attrs
-end
-
-# p cards
-
-# --- Generate PDF with Prawn & Prawn::Document::Grid
+cards = Card.read_from_csv(file)
 
 begin
 
@@ -89,33 +64,7 @@ Prawn::Document.generate("#{outfile}.pdf",
       # p @num_cards_on_page
       # p [ row, column ]
 
-      padding = 12
-
-      cell = pdf.grid( row, column )
-      cell.bounding_box do
-
-        pdf.stroke_color = "666666"
-        pdf.stroke_bounds
-
-        # --- Write content
-        pdf.bounding_box [pdf.bounds.left+padding, pdf.bounds.top-padding], :width => cell.width-padding*2 do
-          pdf.text card.title, :size => 14
-          pdf.text "\n", :size => 14
-          pdf.fill_color "444444"
-          pdf.text card.body, :size => 10
-          pdf.fill_color "000000"
-        end
-
-        pdf.text_box "Points: " + card.points,
-          :size => 12, :at => [12, 50], :width => cell.width-18
-        pdf.text_box "Owner: " + card.owner,
-          :size => 8, :at => [12, 18], :width => cell.width-18
-
-        pdf.fill_color "999999"
-        pdf.text_box card.type.capitalize,  :size => 8,  :align => :right, :at => [12, 18], :width => cell.width-18
-        pdf.fill_color "000000"
-
-      end
+      card.generate_pdf(pdf, pdf.grid( row, column ))
 
     end
 
