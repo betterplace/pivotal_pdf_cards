@@ -1,0 +1,23 @@
+=Pivotal PDF Cards
+
+Original URL: git://gist.github.com/405984.git
+Original Instructions: http://ephemera.karmi.cz/post/622136360/create-printable-pdf-cards-for-your-pivotal-tracker-stor
+
+= What is different?
+
+We added some layout improvements and QR Codes to the cards. Woot.
+
+= Quick instructions
+
+First, install all the required gems:
+
+gem install fastercsv term-ansicolor prawn
+
+And then run this:
+
+curl --silent -X POST 'http://www.pivotaltracker.com/projects/74202/export' \
+--data 'options[include_icebox_stories]=1' > pivotal_test.csv
+ruby pivotal_csv_to_pdf_cards.rb pivotal_test.csv
+open pivotal_test.pdf   # If you're on a Mac...
+
+
